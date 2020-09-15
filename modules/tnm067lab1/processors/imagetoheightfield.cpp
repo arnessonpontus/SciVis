@@ -89,11 +89,11 @@ std::shared_ptr<Mesh> buildMesh(const LayerRAM& image, const ScalarToColorMappin
         const vec2 origin2D = vec2(pos) * cellSize;
         const vec3 origin(origin2D.x, 0.0f, origin2D.y);
 
-        const float imageValue = 0.0f;  // TODO sample image
+        const float imageValue = image.getAsDouble(pos);  // TODO sample image
 
-        const vec4 color = vec4(0.4f, 0.5f, 0.6f, 1.0f);
+        const vec4 color = map.sample(imageValue);
 
-        const float height = imageValue;
+        const float height = imageValue * scaleFactor;
 
         // Box Corners
         const auto zero = origin + vec3(0.0f, 0.0f, 0.0f);
