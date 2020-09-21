@@ -43,13 +43,45 @@ void HydrogenGenerator::process() {
 }
 
 vec3 HydrogenGenerator::cartesianToSphereical(vec3 cartesian) {
-    vec3 sph{cartesian};  // TODO implement the conversion
-    return sph;
+    double r = sqrt((cartesian.x * cartesian.x) + (cartesian.y * cartesian.y) + (cartesian.z * cartesian.z));
+    double theta;
+    double psi;
+
+    if(r == 0) {
+        theta = 0;
+        psi = 0;
+        return vec3{r, theta, psi};
+    }
+
+    double tmp = cartesian.z / r;
+    if(tmp > 1 || tmp < -1 || tmp == 0) {
+        theta = M_PI_2;
+    } else {
+        theta = acos(tmp);
+    }
+
+    psi = atan2(cartesian.y, cartesian.x);
+    return vec3{r, theta, psi};
 }
 
 double HydrogenGenerator::eval(vec3 cartesian) {
-    const double density = cartesian.x;  // TODO implement this
-    return density;
+    vec3 sph = cartesianToSphereical(cartesian);
+    
+    double r = sph.r;
+    double theta = sph.g;
+    double psi = sph.b;
+    
+    double Z = 1.0;
+    double a0 = 1.0;
+    
+    double yellow = 1.0 / (81 * sqrt(6 * M_PI));
+    double red = pow((Z / a0), (3.0 / 2.0));
+    double blue = ((Z * Z) * (r * r)) / (a0 * a0); 
+    double green = exp((-Z * r) / (3.0 * a0));
+    double pink = (3 * pow(cos(theta), 2)) - 1;
+    double density = yellow * red * blue * green * pink;
+
+    return pow(glm::abs(density), 2);
 }
 
 vec3 HydrogenGenerator::idTOCartesian(size3_t pos) {

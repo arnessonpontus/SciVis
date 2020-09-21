@@ -118,7 +118,7 @@ void MarchingTetrahedra::MeshHelper::addTriangle(size_t i0, size_t i1, size_t i2
 
 std::shared_ptr<BasicMesh> MarchingTetrahedra::MeshHelper::toBasicMesh() {
     for (auto& vertex : vertices_) {
-        std::get<0>(vertex) = glm::normalize(std::get<0>(vertex));
+        std::get<1>(vertex) = glm::normalize(std::get<1>(vertex));
     }
     mesh_->addVertices(vertices_);
     return mesh_;
