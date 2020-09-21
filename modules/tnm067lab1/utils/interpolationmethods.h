@@ -84,7 +84,7 @@ T quadratic(const T& a, const T& b, const T& c, F x) {
     0  x    1       2
     */
 // clang-format on
-#define ENABLE_BIQUADRATIC_UNITTEST 0
+#define ENABLE_BIQUADRATIC_UNITTEST 1
 template <typename T, typename F = double>
 T biQuadratic(const std::array<T, 9>& v, F x, F y) {
     T x012 = quadratic(v[0], v[1], v[2], x);
@@ -105,10 +105,29 @@ T biQuadratic(const std::array<T, 9>& v, F x, F y) {
         x
     */
 // clang-format on
-#define ENABLE_BARYCENTRIC_UNITTEST 0
+#define ENABLE_BARYCENTRIC_UNITTEST 1
 template <typename T, typename F = double>
 T barycentric(const std::array<T, 4>& v, F x, F y) {
-    return v[0];
+    F alpha, beta, gamma;
+    T FA, FB, FC;
+
+    if(x + y <  1) {
+        alpha = 1 - (x + y);
+        beta = x;
+        gamma = y;
+        FA = v[0];
+        FB = v[1];
+        FC = v[2];
+    } else {
+        alpha = (x + y) - 1;
+        beta = 1 - x;
+        gamma = 1 - y;
+        FA = v[3];
+        FB = v[2];
+        FC = v[1];
+    }
+  
+    return alpha * FA + beta * FB + gamma * FC;
 }
 
 }  // namespace Interpolation

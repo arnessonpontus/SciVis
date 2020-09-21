@@ -57,8 +57,8 @@ void upsample(ImageUpsampler::IntepolationMethod method, const LayerRAMPrecision
 
                 const std::array<T, 4> verts = {inPixels[inIndex(sample_pos + size2_t(0,0))], // 0
                                                 inPixels[inIndex(sample_pos + size2_t(1,0))], // 1
-                                                inPixels[inIndex(sample_pos + size2_t(1,1))], // 2
-                                                inPixels[inIndex(sample_pos + size2_t(0,1))]}; // 3
+                                                inPixels[inIndex(sample_pos + size2_t(0,1))], // 2
+                                                inPixels[inIndex(sample_pos + size2_t(1,1))]}; // 3
 
                 dvec2 coords = inImageCoords - static_cast<dvec2>(sample_pos);
                 finalColor = TNM067::Interpolation::bilinear(verts, coords.x, coords.y);
@@ -86,6 +86,14 @@ void upsample(ImageUpsampler::IntepolationMethod method, const LayerRAMPrecision
             }
             case ImageUpsampler::IntepolationMethod::Barycentric: {
                 // Update finalColor
+                inImageCoords -= dvec2(0.5);
+                size2_t sample_pos = glm::floor(inImageCoords);
+                const std::array<T, 4> verts = {inPixels[inIndex(sample_pos + size2_t(0,0))], // 0
+                                                inPixels[inIndex(sample_pos + size2_t(1,0))], // 1
+                                                inPixels[inIndex(sample_pos + size2_t(0,1))], // 2
+                                                inPixels[inIndex(sample_pos + size2_t(1,1))]}; // 3
+                dvec2 coords = inImageCoords - static_cast<dvec2>(sample_pos);
+                finalColor = TNM067::Interpolation::barycentric(verts, coords.x, coords.y);
                 break;
             }
             default:
