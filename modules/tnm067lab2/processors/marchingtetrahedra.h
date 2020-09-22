@@ -26,6 +26,14 @@ public:
         vec3 pos;
         float value;
         size_t index;
+
+        // Voxel() { }
+
+        // Voxel(Voxel const& v) {
+        //     pos = v.pos;
+        //     value = v.value;
+        //     index = v.index;
+        // }
     };
 
     struct Cell {
