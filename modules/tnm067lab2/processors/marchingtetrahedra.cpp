@@ -92,12 +92,28 @@ void MarchingTetrahedra::process() {
                 // Use volume->getAsDouble to query values from the volume
                 // Spatial position should be between 0 and 1
                 // The voxel index should be the 1D-index for the voxel
-                for(int i = 0; i < 8; ++i) {
-                    c.voxels[i].pos = pos;
-                    c.voxels[i].value = volume->getAsDouble(pos);
-                    c.voxels[i].index = index(pos);
-                }
-               //std::cout << volume->getAsDouble(pos) << std::endl;
+                
+                // for(int i = 0; i < 8; ++i) {
+                //     c.voxels[i].pos = pos;
+                //     c.voxels[i].value = volume->getAsDouble(pos);
+                //     c.voxels[i].index = index(pos);
+                // }
+
+                Voxel vxl;
+				size_t idx = 0;
+				for (size_t z = 0; z < 2; ++z) {
+					for (size_t y = 0; y < 2; ++y) {
+						for (size_t x = 0; x < 2; ++x) {
+							vec3 gPos(pos.x + x, pos.y + y, pos.z + z);
+							vxl.pos = gPos; 
+							//vxl.pos = vec3(x, y, z); 
+							vxl.index = index(gPos); 
+							vxl.value = volume->getAsDouble(gPos);
+							c.voxels[idx] = vxl;
+							idx++;
+						}
+					}
+				}
                 
                 // Cell c;
 
@@ -112,26 +128,17 @@ void MarchingTetrahedra::process() {
                         t.voxels[j].value = c.voxels[tetrahedraIds[i][j]].value;
                         t.voxels[j].index = c.voxels[tetrahedraIds[i][j]].index;
                     }
-                    //std::cout <<  "POS: " << t.voxels[0].pos << " VALUE: " << t.voxels[0].value  <<  " INDEX: "<<  t.voxels[0].index << std::endl;
                     tetrahedras.push_back(t);
                 }
 
                 for (const Tetrahedra& tetrahedra : tetrahedras) {
                     // Step three: Calculate for tetra case index
-                    //int caseId = 0;
-                    unsigned int case_id = 0b0000;
-                    //std::cout << "num of: " << tetrahedras.size() << std::endl;
-                
-                    int idx = 0;
-                    for(int i = 1; i <= 8; i*=2) {
-                        if(idx < 3) {
-                        //if(tetrahedra.voxels[idx].value > iso) {
-                            //std::cout << tetrahedra.voxels[idx].value << std::endl;
-                            case_id = case_id | i;
-                        } 
-                        idx++;
-                    }
-                    if(case_id != 0 && case_id != 15) std::cout << case_id << std::endl;
+                    int case_id = 0;
+					if (tetrahedra.voxels[0].value > iso) case_id += 1;
+					if (tetrahedra.voxels[1].value > iso) case_id += 2;
+					if (tetrahedra.voxels[2].value > iso) case_id += 4;
+					if (tetrahedra.voxels[3].value > iso) case_id += 8;
+                    //if(case_id != 0 && case_id != 15) std::cout << case_id << std::endl;
 
                     // 0->iso=2.7
                 // 1->iso=2.2
@@ -140,9 +147,6 @@ void MarchingTetrahedra::process() {
                 // abs(iso - 0->iso) = 0.4
                 // t = 0.4/0.5
                 // t*v0 + (1-t)*v1
-
-
-                
 
                     std::vector<Voxel> voxels;
                     std::vector<unsigned long> vert_idx;
