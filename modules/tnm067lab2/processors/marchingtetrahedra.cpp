@@ -62,7 +62,7 @@ void addTriangles(MarchingTetrahedra::MeshHelper& mesh, double iso, std::vector<
         
         for(size_t i = 0; i < voxels.size() - 1; ++i) {
             voxel_diff1 = voxels[i].value - voxels.back().value;
-            t = glm::clamp(iso_diff1 / voxel_diff1, 0.0, 1.0);
+            t = iso_diff1 / voxel_diff1;
             loc = voxels.back().pos + (voxels[i].pos - voxels.back().pos) * t; 
             indices[i] = mesh.addVertex(loc, vert_idx[voxels.size() - 1], vert_idx[i]);
         }
@@ -79,15 +79,22 @@ void addTriangles(MarchingTetrahedra::MeshHelper& mesh, double iso, std::vector<
             
             t = iso_diff1 / voxel_diff1;
             loc = voxels.back().pos + (voxels[i].pos - voxels.back().pos) * t; 
-            indices[i] = mesh.addVertex(loc, vert_idx[voxels.size() - 1], vert_idx[i]);
+            indices[i] = mesh.addVertex(loc, vert_idx[3], vert_idx[i]); // 0: 0 - 3 and  1: 1 - 3
             
             t = iso_diff2 / voxel_diff2;
             loc = voxels[2].pos + (voxels[i].pos - voxels[2].pos) * t; 
-            indices[i+2] = mesh.addVertex(loc, vert_idx[voxels.size() - 2], vert_idx[i]);
+            indices[i+2] = mesh.addVertex(loc, vert_idx[2], vert_idx[i]); // 2: 0 - 2 and 3: 1 - 2
         }
+        // Ind[0] = vert[0] -> vert[3]
+        // Ind[1] = vert[1] -> vert[3]
+        // Ind[2] = vert[0] -> vert[2]
+        // Ind[3] = vert[1] -> vert[2]
 
-        mesh.addTriangle(indices[1], indices[0], indices[3]); // Check order
-        mesh.addTriangle(indices[1], indices[3], indices[2]);
+        // 1 and 2 are unique
+        // 0 and 3 are shared
+        // Might be wrong
+        mesh.addTriangle(indices[0], indices[2], indices[3]); // Check order
+        mesh.addTriangle(indices[1], indices[0], indices[3]);
     }
 
     voxels.clear();
@@ -184,8 +191,8 @@ void MarchingTetrahedra::process() {
                     case 1:
                     case 14:
                         // One triangle
-                        if(case_id == 1) addTriangles(mesh, iso, std::vector<Voxel>{v1, v2, v3, v0}, std::vector<size_t>{v1.index, v2.index, v3.index, v0.index}, true);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v1, v0 }, std::vector<size_t>{v3.index, v2.index, v1.index, v0.index}, true);
+                        if(case_id == 1) addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v1, v0}, std::vector<size_t>{v3.index, v2.index, v1.index, v0.index}, true);
+                        else addTriangles(mesh, iso, std::vector<Voxel>{v1, v2, v3, v0 }, std::vector<size_t>{v1.index, v2.index, v3.index, v0.index}, true);
                         break;
                     case 2:
                     case 13:
@@ -194,7 +201,7 @@ void MarchingTetrahedra::process() {
                         else addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v0, v1 }, std::vector<size_t>{v3.index, v2.index, v0.index, v1.index}, true);
                         break;
                     case 3:
-                    case 12:
+                        // Correct one
                         // Two triangles
                         if(case_id == 3) addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v0, v1 }, std::vector<size_t>{v3.index, v2.index, v0.index, v1.index}, false);
                         else addTriangles(mesh, iso, std::vector<Voxel>{v1, v0, v2, v3 }, std::vector<size_t>{v1.index, v0.index, v2.index, v3.index}, false);
