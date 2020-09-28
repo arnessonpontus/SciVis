@@ -48,57 +48,16 @@ MarchingTetrahedra::MarchingTetrahedra()
 }
 
 // Our own func
-void addTriangles(MarchingTetrahedra::MeshHelper& mesh, double iso, std::vector<MarchingTetrahedra::Voxel> voxels, std::vector<unsigned long> vert_idx, bool single) {
-    double t = 0;
-    double iso_diff1 = 0;
-    double iso_diff2 = 0;
-    double voxel_diff1 = 0;
-    double voxel_diff2 = 0;
-    vec3 loc{};
-    size_t indices[4];
-    
-    if(single) {
-        iso_diff1 = iso - voxels.back().value;
-        
-        for(size_t i = 0; i < voxels.size() - 1; ++i) {
-            voxel_diff1 = voxels[i].value - voxels.back().value;
-            t = iso_diff1 / voxel_diff1;
-            loc = voxels.back().pos + (voxels[i].pos - voxels.back().pos) * t; 
-            indices[i] = mesh.addVertex(loc, vert_idx[voxels.size() - 1], vert_idx[i]);
-        }
-        
+void addTriangles(MarchingTetrahedra::MeshHelper& mesh, double iso, std::vector<MarchingTetrahedra::Voxel> v) {
+    auto loc1 = v[0].pos + ((v[1].pos - v[0].pos) * (iso - v[0].value)) / (v[1].value - v[0].value);
+	auto loc2 = v[2].pos + ((v[3].pos - v[2].pos) * (iso - v[2].value)) / (v[3].value - v[2].value);
+	auto loc3 = v[4].pos + ((v[5].pos - v[4].pos) * (iso - v[4].value)) / (v[5].value - v[4].value);
 
-        mesh.addTriangle(indices[0], indices[1], indices[2]);
-    } else {
-        iso_diff1 = iso - voxels.back().value;
-        iso_diff2 = iso - voxels[2].value;
-        
-        for(size_t i = 0; i < voxels.size() - 2; ++i) {
-            voxel_diff1 = voxels[i].value - voxels.back().value;
-            voxel_diff2 = voxels[i].value - voxels[2].value;
-            
-            t = iso_diff1 / voxel_diff1;
-            loc = voxels.back().pos + (voxels[i].pos - voxels.back().pos) * t; 
-            indices[i] = mesh.addVertex(loc, vert_idx[3], vert_idx[i]); // 0: 0 - 3 and  1: 1 - 3
-            
-            t = iso_diff2 / voxel_diff2;
-            loc = voxels[2].pos + (voxels[i].pos - voxels[2].pos) * t; 
-            indices[i+2] = mesh.addVertex(loc, vert_idx[2], vert_idx[i]); // 2: 0 - 2 and 3: 1 - 2
-        }
-        // Ind[0] = vert[0] -> vert[3]
-        // Ind[1] = vert[1] -> vert[3]
-        // Ind[2] = vert[0] -> vert[2]
-        // Ind[3] = vert[1] -> vert[2]
+	size_t t0 = mesh.addVertex(loc1, v[0].index, v[1].index);
+	size_t t1 = mesh.addVertex(loc2, v[2].index, v[3].index);
+	size_t t2 = mesh.addVertex(loc3, v[4].index, v[5].index);
 
-        // 1 and 2 are unique
-        // 0 and 3 are shared
-        // Might be wrong
-        mesh.addTriangle(indices[0], indices[2], indices[3]); // Check order
-        mesh.addTriangle(indices[1], indices[0], indices[3]);
-    }
-
-    voxels.clear();
-    vert_idx.clear();
+	mesh.addTriangle(t0, t1, t2);
 }
 
 void MarchingTetrahedra::process() {
@@ -156,8 +115,6 @@ void MarchingTetrahedra::process() {
 
                 for (const Tetrahedra& tetrahedra : tetrahedras) {
                     // Step three: Calculate for tetra case index
-
-                    //if(iso < 0) std::cout << "HELLO" << std::endl;
                     unsigned int case_id = 0b0000;
                     if(tetrahedra.voxels[0].value < iso) case_id |= 1;
                     if(tetrahedra.voxels[1].value < iso) case_id |= 2;
@@ -165,79 +122,78 @@ void MarchingTetrahedra::process() {
                     if(tetrahedra.voxels[3].value < iso) case_id |= 8;
 
                     std::vector<Voxel> voxels;
-                    std::vector<unsigned long> vert_idx;
 
-                    Voxel v0;
-                    v0.pos = tetrahedra.voxels[0].pos;
-                    v0.value = tetrahedra.voxels[0].value;
-                    v0.index  = tetrahedra.voxels[0].index;
-
-                    Voxel v1;
-                    v1.pos = tetrahedra.voxels[1].pos;
-                    v1.value = tetrahedra.voxels[1].value;
-                    v1.index = tetrahedra.voxels[1].index;
-
-                    Voxel v2;
-                    v2.pos = tetrahedra.voxels[2].pos;
-                    v2.value = tetrahedra.voxels[2].value;
-                    v2.index = tetrahedra.voxels[2].index;
-                    
-                    Voxel v3;
-                    v3.pos = tetrahedra.voxels[3].pos;
-                    v3.value = tetrahedra.voxels[3].value;
-                    v3.index = tetrahedra.voxels[3].index;
+                    Voxel v0 = tetrahedra.voxels[0];
+                    Voxel v1 = tetrahedra.voxels[1];
+                    Voxel v2 = tetrahedra.voxels[2];     
+                    Voxel v3 = tetrahedra.voxels[3];
                     
                     switch(case_id) {
                     case 1:
                     case 14:
                         // One triangle
-                        if(case_id == 1) addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v1, v0}, std::vector<size_t>{v3.index, v2.index, v1.index, v0.index}, true);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v1, v2, v3, v0 }, std::vector<size_t>{v1.index, v2.index, v3.index, v0.index}, true);
+                        if(case_id == 1) addTriangles(mesh, iso, std::vector<Voxel>{v0, v1, v0, v3, v0, v2});
+                        else addTriangles(mesh, iso, std::vector<Voxel>{v0, v2, v0, v3, v0, v1});
                         break;
                     case 2:
                     case 13:
                        // one triangle
-                        if(case_id == 2) addTriangles(mesh, iso, std::vector<Voxel>{v0, v2, v3, v1 }, std::vector<size_t>{v0.index, v2.index, v3.index, v1.index}, true);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v0, v1 }, std::vector<size_t>{v3.index, v2.index, v0.index, v1.index}, true);
+                        if(case_id == 2) addTriangles(mesh, iso, std::vector<Voxel>{v1, v0, v1, v2, v1, v3});
+                        else addTriangles(mesh, iso, std::vector<Voxel>{v1, v3, v1, v2, v1, v0});
                         break;
                     case 3:
-                        // Correct one
+                    case 12:
                         // Two triangles
-                        if(case_id == 3) addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v0, v1 }, std::vector<size_t>{v3.index, v2.index, v0.index, v1.index}, false);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v1, v0, v2, v3 }, std::vector<size_t>{v1.index, v0.index, v2.index, v3.index}, false);
+                        if(case_id == 3) {
+                            addTriangles(mesh, iso, std::vector<Voxel>{v1, v2, v1, v3, v0, v3});
+                            addTriangles(mesh, iso, std::vector<Voxel>{v1, v2, v0, v3, v0, v2});
+                        }
+                        else {
+                            addTriangles(mesh, iso, std::vector<Voxel>{v0, v3, v1, v3, v1, v2});
+                            addTriangles(mesh, iso, std::vector<Voxel>{v0, v2, v0, v3, v1, v2});
+                        }
                         break;
                     case 4:
                     case 11:                    
                         // One triangle
-                        if(case_id == 4) addTriangles(mesh, iso, std::vector<Voxel>{v3, v1, v0, v2 }, std::vector<size_t>{v3.index, v1.index, v0.index, v2.index}, true);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v0, v1, v3, v2 }, std::vector<size_t>{v0.index, v1.index, v3.index, v2.index}, true);
+                        if(case_id == 4) addTriangles(mesh, iso, std::vector<Voxel>{v2, v3, v2, v1, v2, v0});
+                        else addTriangles(mesh, iso, std::vector<Voxel>{v2, v0, v2, v1, v2, v3});
                         break;
                     case 5:
                     case 10:
                         // Two triangles
-                        if(case_id == 5) addTriangles(mesh, iso, std::vector<Voxel>{v1, v3, v0, v2 }, std::vector<size_t>{v1.index, v3.index, v0.index, v2.index}, false);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v2, v0, v3, v1 }, std::vector<size_t>{v2.index, v0.index, v3.index, v1.index}, false);
+                        if(case_id == 5) {
+                            addTriangles(mesh, iso, std::vector<Voxel>{v2, v1, v0, v1, v0, v3});
+                            addTriangles(mesh, iso, std::vector<Voxel>{v2, v3, v2, v1, v0, v3});
+                        }
+                        else {
+                            addTriangles(mesh, iso, std::vector<Voxel>{v0, v3, v0, v1, v2, v1});
+                            addTriangles(mesh, iso, std::vector<Voxel>{v0, v3, v2, v1, v2, v3});
+                        }
                         break;
                     case 6:
                     case 9:
-                        // Two triangles
-                        if(case_id == 6) addTriangles(mesh, iso, std::vector<Voxel>{v3, v0, v1, v2 }, std::vector<size_t>{v3.index, v0.index, v1.index, v2.index}, false);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v2, v1, v0, v3 }, std::vector<size_t>{v2.index, v1.index, v0.index, v3.index}, false);
+                         // Two triangles
+                        if(case_id == 6) {
+                            addTriangles(mesh, iso, std::vector<Voxel>{v2, v0, v1, v3, v1, v0});
+                            addTriangles(mesh, iso, std::vector<Voxel>{v2, v0, v2, v3, v1, v3});
+                        }
+                        else {
+                            addTriangles(mesh, iso, std::vector<Voxel>{v1, v0, v1, v3, v2, v0});
+                            addTriangles(mesh, iso, std::vector<Voxel>{v1, v3, v2, v3, v2, v0});
+                        }
                         break;
                     case 7:
                     case 8:
                         // One triangle
-                        if(case_id == 7) addTriangles(mesh, iso, std::vector<Voxel>{v0, v1, v2, v3 }, std::vector<size_t>{v0.index, v1.index, v2.index, v3.index}, true);
-                        else addTriangles(mesh, iso, std::vector<Voxel>{v2, v1, v0, v3 }, std::vector<size_t>{v2.index, v1.index, v0.index, v3.index}, true);
+                        if(case_id == 7) addTriangles(mesh, iso, std::vector<Voxel>{v3, v1, v3, v0, v3, v2});
+                        else addTriangles(mesh, iso, std::vector<Voxel>{v3, v2, v3, v0, v3, v1});
                         break;
                     default:
                         break;
                     }
                     
                 }
-
-
-
                     //step four: Extract triangles
                 
             }
