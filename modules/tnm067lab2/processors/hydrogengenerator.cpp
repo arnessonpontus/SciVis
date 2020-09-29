@@ -81,7 +81,7 @@ double HydrogenGenerator::eval(vec3 cartesian) {
     double pink = (3 * pow(cos(theta), 2)) - 1;
     double density = yellow * red * blue * green * pink;
 
-    return pow(glm::abs(density), 2);
+    return pow(density, 2);
 }
 
 vec3 HydrogenGenerator::idTOCartesian(size3_t pos) {
