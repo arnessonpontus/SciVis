@@ -22,9 +22,9 @@ void traverse(vec2 posF, float stepSize, int steps, inout float v, inout int c){
     vec2 pos = posF;
     vec2 direction;
     for(int i = 0; i < steps; ++i) {
-        direction = (texture2D(vfColor, pos).xy) * stepSize;
+        direction = (texture(vfColor, pos).xy) * stepSize;
         pos += direction;
-        v += texture2D(noiseColor, pos).r;
+        v += texture(noiseColor, pos).r;
     }
 }
 
@@ -35,7 +35,6 @@ void main(void) {
     traverse(texCoord_.xy, -0.001, 50, v, c);
     v = v/c;
     //traverse the vector field both forward and backwards to calculate the output color
-
 
     FragData0 = vec4(v,v,v,1);
 }

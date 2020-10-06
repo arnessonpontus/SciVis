@@ -20,6 +20,7 @@ vec2 partialDerivateY(vec2 coord, vec2 pixelSize){
 
     vec2 partial_derivate = (plusy - minusy) / (2.0 * dy);
     return partial_derivate;
+    
 }
 
 float passThrough(vec2 coord){
@@ -49,7 +50,7 @@ float rotation(vec2 coord){
 
 void main(void) {
     //float v = OUTPUT(texCoord_.xy);
-    vec2 coord = texture2D(vfColor, texCoord_.xy).xy;
+    vec2 coord = texture(vfColor, texCoord_.xy).xy;
     float m = magnitude(coord);
     float d = divergence(coord);
     float r = rotation(coord);
